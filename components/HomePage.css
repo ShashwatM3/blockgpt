@@ -1,0 +1,17 @@
+.home-page {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.home-page > h1 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-style: thin;
+  color: white;
+  font-size: 6vh;
+  text-align: center;
+  line-height: 120%;
+}

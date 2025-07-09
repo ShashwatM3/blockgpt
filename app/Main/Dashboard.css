@@ -1,0 +1,29 @@
+.dashboard-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+}
+
+.dashboard-main > div {
+  width: 79.9%;
+  height: 100vh;
+}
+
+.dashboard-main > div:first-child {
+  width: 10%;
+  height: 100vh;
+}
+
+.dashboard-main > div:last-child {
+  width: 10%;
+  height: 100vh;
+}
+
+.lm > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}

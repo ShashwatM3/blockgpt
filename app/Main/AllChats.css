@@ -1,0 +1,41 @@
+.allchats-main {
+  padding-top: 8vh;
+  display: flex;
+  align-items: start;
+  justify-content: center;
+}
+
+.allchats-main > div {
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.ask-user {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #141414;
+  width: 100%;
+  padding: 40px 30px;
+  border-radius: 15px;
+}
+
+.ask-user > div > h1 {
+  margin-bottom: 15px;
+  font-size: 2.5vh;
+}
+
+#allchats {
+  margin-top: 20px;
+}
+
+.root-chat-display {
+  background: #0F0F0F;
+  border: 1px solid #242424;
+}
+
+#realChat {
+  display: none;
+}

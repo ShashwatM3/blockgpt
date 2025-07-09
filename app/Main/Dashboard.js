@@ -14,9 +14,12 @@ import AllChats from "./AllChats"
 import Guide from "./Guide"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { usePathname, useRouter } from 'next/navigation';
 
 function Dashboard() {
   const [userData, setUserData] = useState(null);
+  const router = useRouter()
+  const pathname = usePathname();
 
   async function getData(emailUser) {
     const docRef = doc(db, "users", emailUser);
@@ -47,7 +50,20 @@ function Dashboard() {
             <div>
               <Image alt='' src={chatgpt}/>
               <div className='flex justify-center flex-col gap-10'>
-                <Home alt='' className='h-8 w-8 cursor-pointer'/>
+                <Home onClick={() => {
+                  if (pathname.includes("/Main")) {
+                    const el1 = document.getElementById("justDisplayChats");
+                    const el3 = document.getElementById("ask-user");
+                    const el2 = document.getElementById("realChat");
+                    if(el1 && el2 && el3) {
+                      el1.style.display="block";
+                      el3.style.display="flex";
+                      el2.style.display="none";
+                    }
+                  } else {
+                    router.push("/Main");
+                  }
+                }} alt='' className='h-8 w-8 cursor-pointer'/>
                 <Heart alt='' className='h-8 w-8 cursor-pointer'/>
                 <Dialog>
                   <DialogTrigger asChild>

@@ -29,13 +29,13 @@
   opacity: 70%;
 }
 
-.chat-title-etc > div > button:nth-child(2) {
+#metaChat > button:nth-child(2) {
   opacity: 70%;
   border: 1px solid rgb(71, 71, 71);
   background: none;
 }
 
-.chat-title-etc > div > button:nth-child(2):hover {
+#metaChat > button:nth-child(2):hover {
   opacity: 100%;
   cursor: pointer;
 }
@@ -50,6 +50,14 @@
 
 #allmessages {
   height: 86%;
+  /* border: 1px solid white; */
+  width: 100%;
+  overflow: scroll;
+  padding-bottom: 20px;
+}
+
+#allmessagesBlockMode {
+  height: 100%;
   /* border: 1px solid white; */
   width: 100%;
   overflow: scroll;
@@ -83,10 +91,35 @@
   100% { opacity: 1; }
 }
 
-#allmessages {
+#allmessages, #allmessagesBlockMode {
   -ms-overflow-style: none;
 }
 
 #allmessages::-webkit-scrollbar {
   display: none;
+}
+
+#allmessagesBlockMode::-webkit-scrollbar {
+  display: none;
+}
+
+#branchChat {
+  height: 90vh;
+  background: rgb(22, 22, 22);
+  padding: 25px;
+  border-radius: 20px;
+  display: none;
+}
+
+#blockmode {
+  display: none;
+}
+
+.mainChatBlock {
+  width: 30vw;
+}
+
+.blockMessagesAll {
+  height: 100%;
+  overflow: scroll;
 }

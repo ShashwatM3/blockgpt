@@ -149,7 +149,13 @@ function AllChats(props) {
                         <Share className='h-5 w-5'/>
                       </div>
                       <div className='flex items-center gap-4'>
-                        <span>{rootChat.branches.length} branches</span>
+                        <span className='p-2 px-4 rounded-lg border border-neutral-800'>
+                          {rootChat.branches.length != 1 ? (
+                            <h3>{rootChat.branches.length} branches</h3>
+                          ):(
+                            <h3>{rootChat.branches.length} branch</h3>
+                          )}
+                        </span>
                         <Button onClick={() => {
                           setChatLoaded(rootChat)
                           openChat();

@@ -15,6 +15,7 @@ import Guide from "./Guide"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { usePathname, useRouter } from 'next/navigation';
+import Liked from "./Liked";
 
 function Dashboard() {
   const [userData, setUserData] = useState(null);
@@ -55,16 +56,31 @@ function Dashboard() {
                     const el1 = document.getElementById("justDisplayChats");
                     const el3 = document.getElementById("ask-user");
                     const el2 = document.getElementById("realChat");
+                    const el4 = document.getElementById("liked");
+                    const el5 = document.getElementById("allchatsdiv");
+                    const el6 = document.getElementById("guidediv");
                     if(el1 && el2 && el3) {
                       el1.style.display="block";
                       el3.style.display="flex";
                       el2.style.display="none";
+                      el4.style.display="none";
+                      el5.style.display="block";
+                      el6.style.display="block";
                     }
                   } else {
                     router.push("/Main");
                   }
                 }} alt='' className='h-8 w-8 cursor-pointer'/>
-                <Heart alt='' className='h-8 w-8 cursor-pointer'/>
+                <Heart onClick={() => {
+                  const el = document.getElementById("liked");
+                  const el2 = document.getElementById("allchatsdiv");
+                  const el3 = document.getElementById("guidediv");
+                  if(el && el2 && el3) {
+                    el2.style.display="none";
+                    el3.style.display="none";
+                    el.style.display="block";
+                  }
+                }} alt='' className='h-8 w-8 cursor-pointer'/>
                 <Dialog>
                   <DialogTrigger asChild>
                     <UserRound alt='' className='h-8 w-8 cursor-pointer'/>
@@ -88,11 +104,14 @@ function Dashboard() {
               <h1></h1>
             </div>
           </div>
-          <div className='py-6'>
+          <div className='py-6' id="allchatsdiv">
             <AllChats userData={userData}/>
           </div>
-          <div className='py-6'>
+          <div className='py-6' id="guidediv">
             <Guide userData={userData}/>
+          </div>
+          <div id="liked">
+            <Liked userData={userData}/>
           </div>
         </>
       )}

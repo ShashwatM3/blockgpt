@@ -1,7 +1,7 @@
 .dashboard-main {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
   width: 100vw;
   height: 100vh;
 }
@@ -16,7 +16,7 @@
   height: 100vh;
 }
 
-.dashboard-main > div:last-child {
+.dashboard-main > div:nth-child(3) {
   width: 10%;
   height: 100vh;
 }
@@ -26,4 +26,8 @@
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
+}
+
+#liked {
+  display: none;
 }

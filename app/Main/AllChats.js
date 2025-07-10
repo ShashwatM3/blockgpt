@@ -31,6 +31,7 @@ function AllChats(props) {
       const serverTime = new Date();
       // console.log(serverTime.toString())
       await setDoc(doc(db, "chats", el.value), {
+        name: el.value,
         chatType: "root",
         parent: null,
         branch_point_index: null,
@@ -65,10 +66,12 @@ function AllChats(props) {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        return {
-          ...docSnap.data(),
-          name: element
-        };
+        if(docSnap.data().chatType=="root") {
+          return {
+            ...docSnap.data(),
+            name: element
+          };
+        }
       } else {
         console.log("No such data!");
         return null;

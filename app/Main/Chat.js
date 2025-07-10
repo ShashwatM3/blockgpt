@@ -2,14 +2,22 @@ import React, { useEffect, useState } from 'react';
 import "./Chat.css"
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
-import { doc, updateDoc } from 'firebase/firestore';
+import { arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
+import add from "@/components/add.png"
+import Image from 'next/image';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { GitBranch } from 'lucide-react';
 
+// current Chat ka ID -> {rootChatData.name}
 
 function Chat(props) {
   const [rootChatData, setRootChatData] = useState(null);
   const [mode, setMode] = useState("chat");
   const [messagesArray, setMessagesArray] = useState(null);
+  const [branches, setBranches] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,12 +68,43 @@ function Chat(props) {
     }
   }
 
+  async function createBranch(blockNumber) {
+    const el = document.getElementById("newBranchName");
+    if (el) {
+      toast.info("Creating branch...")
+      const serverTime = new Date();
+      await setDoc(doc(db, "chats", el.value), {
+        name: el.value,
+        chatType: "branch",
+        parent: rootChatData.name,
+        branch_point_index: blockNumber-1,
+        messages: messagesArray.slice(0, blockNumber),
+        branches: [],
+        createdAt: serverTime.toString(),
+        favorite: "no"
+      });
+      const newBranchUpdation = {
+        [el.value]: blockNumber-1
+      }
+      await updateDoc(doc(db, "chats", rootChatData.name), {
+        branches: arrayUnion(newBranchUpdation)
+      });
+      toast.success('Branch created! Refresh the page to load the changes!', {
+        action: {
+          label: 'Refresh',
+          onClick: () => window.location.reload()
+        },
+      })
+    }
+  }
+
   useEffect(() => {
     console.log(props.chat)
     if (props.chat) {
       console.log(props.chat)
       setRootChatData(props.chat)
       setMessagesArray(props.chat.messages)
+      setBranches(props.chat.branches)
       const el = document.getElementById("allchats-main");
       if(el) {
         el.style.paddingTop = "1vh"
@@ -88,20 +127,39 @@ function Chat(props) {
           <div className='mainchat'>
             <div className='px-4' id="allmessages">
               {messagesArray?.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`my-4 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+                <React.Fragment key={index}>
                   <div
-                    className={`max-w-[70%] px-4 py-3 rounded-xl text-sm leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#2e2e2e] text-white'
-                        : 'border border-[#444] text-white'
-                    }`}
+                    className={`my-4 mb-2 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-center gap-2`}
                   >
-                    <ReactMarkdown>{msg.message || msg.content}</ReactMarkdown>
+                    <div
+                      className={`max-w-[70%] px-4 py-3 rounded-xl text-sm leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-[#2e2e2e] text-white'
+                          : 'border border-[#444] text-white'
+                      }`}
+                    >
+                      <ReactMarkdown>{msg.message || msg.content}</ReactMarkdown>
+                    </div>
+                    {msg.role=='assistant' && !(branches.some(obj => Object.values(obj)[0] === index)) && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Image className='h-11 w-13 rounded-md' alt = "" src={add}/>
+                        </DialogTrigger>
+                        <DialogContent className='dark border border-neutral-800'>
+                          <DialogHeader>
+                            <DialogTitle>Make a new branch</DialogTitle>
+                            <DialogDescription>Enter the name of your new branch at position</DialogDescription>
+                            <Input id="newBranchName"/>
+                          </DialogHeader>
+                          <DialogClose className='bg-white py-2 rounded-md text-black' onClick={() => {createBranch(index+1)}} id="dialogfooter">Create Branch</DialogClose>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
-                </div>
+                  {msg.role === "assistant" && branches.some(obj => Object.values(obj)[0] === index) && (
+                    <h1 className='opacity-[70%] flex items-center gap-1.5 p-3 border border-neutral-800 w-fit rounded-xl'><GitBranch className='h-4 w-4'/> <span>Branch exists <span className='text-blue-400 font-bold'>here</span></span></h1>
+                  )}
+                </React.Fragment>
               ))}
               {loading && (
                 <div className="loading-indicator">Loading</div>

@@ -40,7 +40,7 @@ function Liked(props) {
   }, [props.userData]);
 
   return (
-    <div className='liked-main flex items-start mt-[10vh] h-full'>
+    <div className='liked-main flex items-start mt-3 h-full'>
       {allChats && (
         <div>
           <h1 className='scroll-m-20 text-4xl font-extrabold tracking-tight text-balance mb-3'>Favorites </h1>

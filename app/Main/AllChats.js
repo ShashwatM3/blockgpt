@@ -14,9 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { updateDoc, arrayUnion, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
-import { Heart, Share } from 'lucide-react';
+import { GitBranch, Heart, Share, Calendar } from 'lucide-react';
 import Chat from "./Chat";
 import { toast } from "sonner"
+import Liked from './Liked';
 
 function AllChats(props) {
   const [userData, setUserData] = useState(null);
@@ -24,7 +25,47 @@ function AllChats(props) {
   const [reload, setReload] = useState(false);
   const [chatLoaded, setChatLoaded] = useState(null);
   const [favorites, setFavorites] = useState({});
+  const [sortByDate, setSortByDate] = useState(false);
+  const [sortedChats, setSortedChats] = useState(null);
   
+  // Function to categorize chats by date
+  const categorizeChatsByDate = (chats) => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    const categorized = {
+      thisWeek: [],
+      thisMonth: [],
+      other: []
+    };
+    
+    chats.forEach(chat => {
+      const chatDate = new Date(chat.createdAt);
+      
+      if (chatDate >= oneWeekAgo) {
+        categorized.thisWeek.push(chat);
+      } else if (chatDate >= oneMonthAgo) {
+        categorized.thisMonth.push(chat);
+      } else {
+        categorized.other.push(chat);
+      }
+    });
+    
+    return categorized;
+  };
+
+  // Function to format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   async function createDoc() {
     const el = document.getElementById("newChat");
     if(el) {
@@ -53,10 +94,21 @@ function AllChats(props) {
     const el1 = document.getElementById("justDisplayChats");
     const el3 = document.getElementById("ask-user");
     const el2 = document.getElementById("realChat");
+    const allChatsMain = document.getElementById("allchats-main");
+    const likedSection = document.getElementById("liked");
+    
     if(el1 && el2 && el3) {
       el1.style.display="none";
       el3.style.display="none";
       el2.style.display="block";
+      
+      // Set width to 100% and hide favorites section
+      if(allChatsMain) {
+        allChatsMain.style.width = "100%";
+      }
+      if(likedSection) {
+        likedSection.style.display = "none";
+      }
     }
   }
 
@@ -88,10 +140,17 @@ function AllChats(props) {
       fetchChatsData(props.userData.root_chats);
     }
   }, [props.userData]);
+
+  // Update sorted chats when allChats changes
+  useEffect(() => {
+    if (allChats) {
+      setSortedChats(categorizeChatsByDate(allChats));
+    }
+  }, [allChats]);
   
   return (
     <div className='allchats-main' id="allchats-main">
-      <div className='w-full'>
+      <div className='w-full' id="scrollToIndicatorChats">
         <div className='ask-user' id="ask-user">
           <Image alt='' className='h-20 w-20 rounded-full' src={avatar}/>
           <div>
@@ -129,45 +188,207 @@ function AllChats(props) {
           ) : allChats && allChats.length>0 && userData.root_chats ? (
             <>
               <div id="justDisplayChats">
-                {allChats.map((rootChat) => (
-                  // <h1 key={rootChat.name}>Hello</h1>
-                  <div key={rootChat.name} className='root-chat-display w-full p-6 rounded-xl mb-4'>
-                    <h1 className=' text-xl'>{rootChat.name}</h1>
-                    <div className='flex justify-between items-center mt-4'>
-                      <div className='flex items-center gap-5'>
-                        {rootChat.favorite=="yes" ? (
-                          // <Heart strokeWidth={0} className='h-5 w-5 border-none' fill='red'/>
-                          <h3 className='flex items-center gap-2'><span className='text-[#FA2C37]'>Favorited</span><Heart fill='#FA2C30' strokeWidth={0}/></h3>
-                        ):(
-                          <Button onClick={async () => {
-                            toast("You favorited it! Changes will be made the next time you visit this page")
-                            await updateDoc(doc(db, "chats", rootChat.name), {
-                              favorite: "yes"
-                            })
-                          }} className='dark border-neutral-800' variant={'outline'}>Favorite this {'<3'}</Button>
-                        )}
-                        <Share className='h-5 w-5'/>
+                {/* Sort Toggle Button */}
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold">Your Chats</h2>
+                  <Button 
+                    onClick={() => setSortByDate(!sortByDate)} 
+                    className='dark border-neutral-800' 
+                    variant={'outline'}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {sortByDate ? 'Show All' : 'Sort by Date'}
+                  </Button>
+                </div>
+
+                {sortByDate ? (
+                  // Sorted view
+                  <div>
+                    {sortedChats?.thisWeek && sortedChats.thisWeek.length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="text-lg font-medium mb-4">This Week</h3>
+                        {sortedChats.thisWeek.map((rootChat) => (
+                          <div key={rootChat.name} className='root-chat-display w-full p-6 rounded-xl mb-4'>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h1 className='text-xl'>{rootChat.name}</h1>
+                                <p className="text-sm text-gray-400 mt-1">Created: {formatDate(rootChat.createdAt)}</p>
+                              </div>
+                            </div>
+                            <div className='flex justify-between items-center mt-4'>
+                              <div className='flex items-center gap-5'>
+                                {rootChat.favorite=="yes" ? (
+                                  <h3 className='flex items-center gap-2'><span className='text-[#FA2C37]'>Favorited</span><Heart fill='#FA2C30' strokeWidth={0}/></h3>
+                                ):(
+                                  <Button onClick={async () => {
+                                    toast("You favorited it! Changes will be made the next time you visit this page")
+                                    await updateDoc(doc(db, "chats", rootChat.name), {
+                                      favorite: "yes"
+                                    })
+                                  }} className='dark border-neutral-800' variant={'outline'}>Favorite this {'<3'}</Button>
+                                )}
+                                <Share className='h-5 w-5'/>
+                              </div>
+                              <div className='flex items-center gap-4'>
+                                <span className='p-2 px-4 rounded-lg border border-neutral-800'>
+                                  {rootChat.branches.length != 1 ? (
+                                    <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branches</h3>
+                                  ):(
+                                    <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branch</h3>
+                                  )}
+                                </span>
+                                <Button onClick={() => {
+                                  setChatLoaded(rootChat);
+                                  // Use setTimeout to ensure state update happens before openChat
+                                  setTimeout(() => {
+                                    openChat();
+                                  }, 0);
+                                }} className='dark'>Enter Chat</Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className='flex items-center gap-4'>
-                        <span className='p-2 px-4 rounded-lg border border-neutral-800'>
-                          {rootChat.branches.length != 1 ? (
-                            <h3>{rootChat.branches.length} branches</h3>
+                    )}
+
+                    {sortedChats?.thisMonth && sortedChats.thisMonth.length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="text-lg font-medium mb-4">This Month</h3>
+                        {sortedChats.thisMonth.map((rootChat) => (
+                          <div key={rootChat.name} className='root-chat-display w-full p-6 rounded-xl mb-4'>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h1 className='text-xl'>{rootChat.name}</h1>
+                                <p className="text-sm text-gray-400 mt-1">Created: {formatDate(rootChat.createdAt)}</p>
+                              </div>
+                            </div>
+                            <div className='flex justify-between items-center mt-4'>
+                              <div className='flex items-center gap-5'>
+                                {rootChat.favorite=="yes" ? (
+                                  <h3 className='flex items-center gap-2'><span className='text-[#FA2C37]'>Favorited</span><Heart fill='#FA2C30' strokeWidth={0}/></h3>
+                                ):(
+                                  <Button onClick={async () => {
+                                    toast("You favorited it! Changes will be made the next time you visit this page")
+                                    await updateDoc(doc(db, "chats", rootChat.name), {
+                                      favorite: "yes"
+                                    })
+                                  }} className='dark border-neutral-800' variant={'outline'}>Favorite this {'<3'}</Button>
+                                )}
+                                <Share className='h-5 w-5'/>
+                              </div>
+                              <div className='flex items-center gap-4'>
+                                <span className='p-2 px-4 rounded-lg border border-neutral-800'>
+                                  {rootChat.branches.length != 1 ? (
+                                    <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branches</h3>
+                                  ):(
+                                    <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branch</h3>
+                                  )}
+                                </span>
+                                <Button onClick={() => {
+                                  setChatLoaded(rootChat);
+                                  // Use setTimeout to ensure state update happens before openChat
+                                  setTimeout(() => {
+                                    openChat();
+                                  }, 0);
+                                }} className='dark'>Enter Chat</Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {sortedChats?.other && sortedChats.other.length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="text-lg font-medium mb-4">Other</h3>
+                        {sortedChats.other.map((rootChat) => (
+                          <div key={rootChat.name} className='root-chat-display w-full p-6 rounded-xl mb-4'>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h1 className='text-xl'>{rootChat.name}</h1>
+                                <p className="text-sm text-gray-400 mt-1">Created: {formatDate(rootChat.createdAt)}</p>
+                              </div>
+                            </div>
+                            <div className='flex justify-between items-center mt-4'>
+                              <div className='flex items-center gap-5'>
+                                {rootChat.favorite=="yes" ? (
+                                  <h3 className='flex items-center gap-2'><span className='text-[#FA2C37]'>Favorited</span><Heart fill='#FA2C30' strokeWidth={0}/></h3>
+                                ):(
+                                  <Button onClick={async () => {
+                                    toast("You favorited it! Changes will be made the next time you visit this page")
+                                    await updateDoc(doc(db, "chats", rootChat.name), {
+                                      favorite: "yes"
+                                    })
+                                  }} className='dark border-neutral-800' variant={'outline'}>Favorite this {'<3'}</Button>
+                                )}
+                                <Share className='h-5 w-5'/>
+                              </div>
+                              <div className='flex items-center gap-4'>
+                                <span className='p-2 px-4 rounded-lg border border-neutral-800'>
+                                  {rootChat.branches.length != 1 ? (
+                                    <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branches</h3>
+                                  ):(
+                                    <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branch</h3>
+                                  )}
+                                </span>
+                                <Button onClick={() => {
+                                  setChatLoaded(rootChat);
+                                  // Use setTimeout to ensure state update happens before openChat
+                                  setTimeout(() => {
+                                    openChat();
+                                  }, 0);
+                                }} className='dark'>Enter Chat</Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // Original unsorted view
+                  allChats.map((rootChat) => (
+                    <div key={rootChat.name} className='root-chat-display w-full p-6 rounded-xl mb-4'>
+                      <h1 className=' text-xl'>{rootChat.name}</h1>
+                      <div className='flex justify-between items-center mt-4'>
+                        <div className='flex items-center gap-5'>
+                          {rootChat.favorite=="yes" ? (
+                            <h3 className='flex items-center gap-2'><span className='text-[#FA2C37]'>Favorited</span><Heart fill='#FA2C30' strokeWidth={0}/></h3>
                           ):(
-                            <h3>{rootChat.branches.length} branch</h3>
+                            <Button onClick={async () => {
+                              toast("You favorited it! Changes will be made the next time you visit this page")
+                              await updateDoc(doc(db, "chats", rootChat.name), {
+                                favorite: "yes"
+                              })
+                            }} className='dark border-neutral-800' variant={'outline'}>Favorite this {'<3'}</Button>
                           )}
-                        </span>
-                        <Button onClick={() => {
-                          setChatLoaded(rootChat)
-                          openChat();
-                        }} className='dark'>Enter Chat</Button>
+                          <Share className='h-5 w-5'/>
+                        </div>
+                        <div className='flex items-center gap-4'>
+                          <span className='p-2 px-4 rounded-lg border border-neutral-800'>
+                            {rootChat.branches.length != 1 ? (
+                              <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branches</h3>
+                            ):(
+                              <h3 className='flex items-center gap-1'><GitBranch className='h-4 w-4'/>{rootChat.branches.length} branch</h3>
+                            )}
+                          </span>
+                          <Button onClick={() => {
+                            setChatLoaded(rootChat);
+                            // Use setTimeout to ensure state update happens before openChat
+                            setTimeout(() => {
+                              openChat();
+                            }, 0);
+                          }} className='dark'>Enter Chat</Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
+                <br/>
               </div>
               <div id="realChat">
                 {chatLoaded && (
-                  <Chat chat={chatLoaded}/>
+                  <Chat chat={chatLoaded} onCloseChat={() => setChatLoaded(null)}/>
                 )}
               </div>
             </>
@@ -175,6 +396,10 @@ function AllChats(props) {
             <div>No chats yet</div>
           )}
         </div>
+        <div id="liked">
+          <Liked userData={userData}/>
+        </div>
+        <br/><br/>
       </div>
     </div>
   )

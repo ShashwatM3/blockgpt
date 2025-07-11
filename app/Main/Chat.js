@@ -100,10 +100,26 @@ function Chat(props) {
     const el1 = document.getElementById("justDisplayChats");
     const el3 = document.getElementById("ask-user");
     const el2 = document.getElementById("realChat");
+    const allChatsMain = document.getElementById("allchats-main");
+    const likedSection = document.getElementById("liked");
+    
     if(el1 && el2 && el3) {
       el1.style.display="block";
       el3.style.display="flex";
       el2.style.display="none";
+      
+      // Reset width to 60% and show favorites section
+      if(allChatsMain) {
+        allChatsMain.style.width = "60%";
+      }
+      if(likedSection) {
+        likedSection.style.display = "block";
+      }
+      
+      // Clear the chat data by calling the parent's setChatLoaded function
+      if (props.onCloseChat) {
+        props.onCloseChat();
+      }
     }
   }
 
@@ -274,9 +290,9 @@ function Chat(props) {
               </div>
             </div>
           </div>
-          <div id="blockmode">
+          <div id="blockmode" className='w-full'>
             <div className='px-4' id="allmessagesBlockMode">
-              <div className="flex flex-col items-center relative px-4 pt-7">
+              <div className="flex flex-col items-center justify-center relative px-4 pt-7 w-full">
                 {messagesArray.map((msg, idx) => {
                   // Check if this index is a branch point
                   const branch = branches.find(obj => Object.values(obj)[0] === idx);

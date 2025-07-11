@@ -52,34 +52,21 @@ function Dashboard() {
               <Image alt='' src={chatgpt}/>
               <div className='flex justify-center flex-col gap-10'>
                 <Home onClick={() => {
-                  if (pathname.includes("/Main")) {
-                    const el1 = document.getElementById("justDisplayChats");
-                    const el3 = document.getElementById("ask-user");
-                    const el2 = document.getElementById("realChat");
-                    const el4 = document.getElementById("liked");
-                    const el5 = document.getElementById("allchatsdiv");
-                    const el6 = document.getElementById("guidediv");
-                    if(el1 && el2 && el3) {
-                      el1.style.display="block";
-                      el3.style.display="flex";
-                      el2.style.display="none";
-                      el4.style.display="none";
-                      el5.style.display="block";
-                      el6.style.display="block";
-                    }
-                  } else {
-                    router.push("/Main");
-                  }
+                  const targetElement = document.getElementById('scrollToIndicatorChats');
+                  console.log(targetElement)
+                  targetElement.scrollIntoView({ behavior: 'smooth', block: "start" });
                 }} alt='' className='h-8 w-8 cursor-pointer'/>
                 <Heart onClick={() => {
-                  const el = document.getElementById("liked");
-                  const el2 = document.getElementById("allchatsdiv");
-                  const el3 = document.getElementById("guidediv");
-                  if(el && el2 && el3) {
-                    el2.style.display="none";
-                    el3.style.display="none";
-                    el.style.display="block";
-                  }
+                  // const el = document.getElementById("liked");
+                  // const el2 = document.getElementById("allchatsdiv");
+                  // const el3 = document.getElementById("guidediv");
+                  // if(el && el2 && el3) {
+                  //   el2.style.display="none";
+                  //   el3.style.display="none";
+                  //   el.style.display="flex";
+                  // }
+                  const targetElement = document.getElementById('liked');
+                  targetElement.scrollIntoView({ behavior: 'smooth', block: "start" });
                 }} alt='' className='h-8 w-8 cursor-pointer'/>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -104,14 +91,11 @@ function Dashboard() {
               <h1></h1>
             </div>
           </div>
-          <div className='py-6' id="allchatsdiv">
+          <div className='py-6 flex items-start justify-center h-[100vh] overflow-scroll' id="allchatsdiv">
             <AllChats userData={userData}/>
           </div>
           <div className='py-6' id="guidediv">
             <Guide userData={userData}/>
-          </div>
-          <div id="liked">
-            <Liked userData={userData}/>
           </div>
         </>
       )}

@@ -1,8 +1,8 @@
 .allchats-main {
-  padding-top: 8vh;
   display: flex;
   align-items: start;
   justify-content: center;
+  width: 60%;
 }
 
 .allchats-main > div {
@@ -20,6 +20,7 @@
   width: 100%;
   padding: 40px 30px;
   border-radius: 15px;
+  margin-top: 7vh
 }
 
 .ask-user > div > h1 {

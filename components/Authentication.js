@@ -29,7 +29,8 @@ export function Authentication() {
         password: el2.value,
         root_chats: [],
         tier: "Basic",
-        favorites: []
+        favorites: [],
+        avatar: null
       });
       localStorage.setItem("blockgpt verification", email.value);
       router.push("/Main")

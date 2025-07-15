@@ -15,3 +15,15 @@
   text-align: center;
   line-height: 120%;
 }
+
+@media (max-width: 600px) {
+  .home-page {
+    height: auto;
+    min-height: 100vh;
+    padding: 10px 0;
+  }
+  .home-page > h1 {
+    font-size: 2rem;
+    padding: 0 10px;
+  }
+}

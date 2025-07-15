@@ -123,3 +123,61 @@
   height: 100%;
   overflow: scroll;
 }
+
+@media (max-width: 600px) {
+  .chat-main {
+    height: auto;
+    padding: 10px;
+    border-radius: 10px;
+    min-height: 100vh;
+  }
+  .chat-main > div {
+    flex-direction: column;
+    gap: 1vh;
+    height: auto;
+  }
+  .chat-title-etc {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: auto;
+    margin-bottom: 10px;
+  }
+  .chat-title-etc > h1 {
+    font-size: 1.2rem;
+  }
+  .mainchat {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    /* align-items: stretch; */
+  }
+  .mainChatBlock {
+    width: 90vw;
+    max-width: 98vw;
+    min-width: 0;
+    font-size: 1rem;
+    padding: 10px 8px;
+  }
+  #allmessages, #allmessagesBlockMode {
+    width: 100%;
+    padding: 0;
+    font-size: 1rem;
+    min-width: 0;
+    max-width: 100vw;
+  }
+  .user-input {
+    padding: 10px;
+    width: 100%;
+  }
+  #userInputMessage {
+    font-size: 1rem;
+    padding: 10px;
+  }
+  #branchChat {
+    padding: 10px;
+    border-radius: 10px;
+    min-height: 100vh;
+  }
+}

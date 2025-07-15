@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import "./Dashboard.css";
 import Image from 'next/image';
 import { Home, House } from 'lucide-react';
@@ -9,10 +9,10 @@ import { UserRound } from 'lucide-react';
 import chatgpt from "@/components/chatgpt.png"
 import { doc, getDoc } from "firebase/firestore";
 import { db } from '@/firebase';
-import avatar from "@/components/avatar.png";
+// import avatar from "@/components/avatar.png";
 import AllChats from "./AllChats"
 import Guide from "./Guide"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
 import { Button } from '@/components/ui/button';
 import { usePathname, useRouter } from 'next/navigation';
 import Liked from "./Liked";
@@ -21,6 +21,7 @@ function Dashboard() {
   const [userData, setUserData] = useState(null);
   const router = useRouter()
   const pathname = usePathname();
+  const allChatsRef = useRef();
 
   async function getData(emailUser) {
     const docRef = doc(db, "users", emailUser);
@@ -52,9 +53,11 @@ function Dashboard() {
               <Image alt='' src={chatgpt}/>
               <div className='flex justify-center flex-col gap-10'>
                 <Home onClick={() => {
+                  if (allChatsRef.current && allChatsRef.current.closeChat) {
+                    allChatsRef.current.closeChat();
+                  }
                   const targetElement = document.getElementById('scrollToIndicatorChats');
-                  console.log(targetElement)
-                  targetElement.scrollIntoView({ behavior: 'smooth', block: "start" });
+                  if(targetElement) targetElement.scrollIntoView({ behavior: 'smooth', block: "start" });
                 }} alt='' className='h-8 w-8 cursor-pointer'/>
                 <Heart onClick={() => {
                   // const el = document.getElementById("liked");
@@ -68,31 +71,13 @@ function Dashboard() {
                   const targetElement = document.getElementById('liked');
                   targetElement.scrollIntoView({ behavior: 'smooth', block: "start" });
                 }} alt='' className='h-8 w-8 cursor-pointer'/>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <UserRound alt='' className='h-8 w-8 cursor-pointer'/>
-                  </DialogTrigger>
-                  <DialogContent className='dark border border-neutral-800'>
-                    <DialogHeader>
-                      <DialogTitle>Do you wish to log out?</DialogTitle>
-                      <DialogDescription className='mb-2'>Note: This action is not reversible</DialogDescription>
-                      <div className='flex items-center'>
-                        <Button onClick={() => {
-                          localStorage.removeItem("blockgpt verification");
-                          alert("Your user data will still be saved in our database");
-                          window.location.reload()
-                        }} className='dark' variant={'destructive'}>Yes</Button>
-                      </div>
-                    </DialogHeader>
-                    <DialogFooter>Exit</DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <UserRound onClick={() => {router.push("/profile")}} alt='' className='h-8 w-8 cursor-pointer'/>
               </div>
               <h1></h1>
             </div>
           </div>
           <div className='py-6 flex items-start justify-center h-[100vh] overflow-scroll' id="allchatsdiv">
-            <AllChats userData={userData}/>
+            <AllChats ref={allChatsRef} userData={userData}/>
           </div>
           <div className='py-6' id="guidediv">
             <Guide userData={userData}/>

@@ -13,7 +13,23 @@ import { GitBranch } from 'lucide-react';
 
 // current Chat ka ID -> {rootChatData.name}
 
+// Helper to get chat doc ID safely (avoids double email)
+function getChatDocId(owner, name) {
+  if (name && name.includes('__')) return name;
+  return `${owner}__${name}`;
+}
+
+// Helper to get display name from chat ID
+function getDisplayChatName(chat) {
+  if (!chat) return '';
+  if (chat.name && chat.name.includes('__')) {
+    return chat.name.split('__').slice(1).join('__');
+  }
+  return chat.name || '';
+}
+
 function Chat(props) {
+  const { userData, chat, onCloseChat } = props;
   const [rootChatData, setRootChatData] = useState(null);
   const [mode, setMode] = useState("chat");
   const [messagesArray, setMessagesArray] = useState(null);
@@ -42,7 +58,7 @@ function Chat(props) {
       body: JSON.stringify({ messages: updatedMessages }),
     });
 
-    await updateDoc(doc(db, "chats", rootChatData.name), {
+    await updateDoc(doc(db, "chats", getChatDocId(rootChatData.owner || userData.email, rootChatData.name)), {
       messages: updatedMessages
     });
   
@@ -53,7 +69,7 @@ function Chat(props) {
     setMessagesArray(finalMessages);
     
     // Update Firebase with both user message and assistant response
-    await updateDoc(doc(db, "chats", rootChatData.name), {
+    await updateDoc(doc(db, "chats", getChatDocId(rootChatData.owner || userData.email, rootChatData.name)), {
       messages: finalMessages
     });
   
@@ -63,13 +79,14 @@ function Chat(props) {
   const sendMessageBranch = async () => {
     if (!message.trim()) return;
     setMessage("");
-  
+
+    // Use branchChatData for branch messages
     const newMessage = { role: "user", content: message };
-    const updatedMessages = [...(messagesArray || []), newMessage];
-    setMessagesArray(updatedMessages);
-  
+    const updatedMessages = [...(branchChatData?.messages || []), newMessage];
+    setBranchChatData({ ...branchChatData, messages: updatedMessages });
+
     setLoading(true); // Start loading
-  
+
     const res = await fetch('/api/ask', {
       method: 'POST',
       headers: {
@@ -78,21 +95,21 @@ function Chat(props) {
       body: JSON.stringify({ messages: updatedMessages }),
     });
 
-    await updateDoc(doc(db, "chats", rootChatData.name), {
+    await updateDoc(doc(db, "chats", getChatDocId(branchChatData.owner || userData.email, branchChatData.name)), {
       messages: updatedMessages
     });
-  
+
     const data = await res.json();
     console.log(data);
     const newAssistantMessage = { role: "assistant", content: data.answer };
     const finalMessages = [...updatedMessages, newAssistantMessage];
-    setMessagesArray(finalMessages);
-    
+    setBranchChatData({ ...branchChatData, messages: finalMessages });
+
     // Update Firebase with both user message and assistant response
-    await updateDoc(doc(db, "chats", rootChatData.name), {
+    await updateDoc(doc(db, "chats", getChatDocId(branchChatData.owner || userData.email, branchChatData.name)), {
       messages: finalMessages
     });
-  
+
     setLoading(false); // Stop loading
   };
 
@@ -117,8 +134,8 @@ function Chat(props) {
       }
       
       // Clear the chat data by calling the parent's setChatLoaded function
-      if (props.onCloseChat) {
-        props.onCloseChat();
+      if (onCloseChat) {
+        onCloseChat();
       }
     }
   }
@@ -128,7 +145,7 @@ function Chat(props) {
     if (el) {
       toast.info("Creating branch...")
       const serverTime = new Date();
-      await setDoc(doc(db, "chats", el.value), {
+      await setDoc(doc(db, "chats", getChatDocId(rootChatData.owner || userData.email, el.value)), {
         name: el.value,
         chatType: "branch",
         parent: rootChatData.name,
@@ -141,22 +158,19 @@ function Chat(props) {
       const newBranchUpdation = {
         [el.value]: blockNumber-1
       }
-      await updateDoc(doc(db, "chats", rootChatData.name), {
+      await updateDoc(doc(db, "chats", getChatDocId(rootChatData.owner || userData.email, rootChatData.name)), {
         branches: arrayUnion(newBranchUpdation)
       });
-      toast.success('Branch created! Refresh the page to load the changes!', {
-        action: {
-          label: 'Refresh',
-          onClick: () => window.location.reload()
-        },
-      })
+      toast.success('Branch created! Loading branch...');
+      // Immediately load the new branch
+      settingBranchData(el.value);
     }
   }
 
   async function settingBranchData(branchID) {
     toast.info("Loading branch data....")
     const idBranch = branchID
-    const docRef = doc(db, "chats", branchID);
+    const docRef = doc(db, "chats", getChatDocId(rootChatData.owner || userData.email, branchID));
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -186,12 +200,12 @@ function Chat(props) {
   };
 
   useEffect(() => {
-    console.log(props.chat)
-    if (props.chat) {
-      console.log(props.chat)
-      setRootChatData(props.chat)
-      setMessagesArray(props.chat.messages)
-      setBranches(props.chat.branches)
+    console.log(chat)
+    if (chat) {
+      console.log(chat)
+      setRootChatData(chat)
+      setMessagesArray(chat.messages)
+      setBranches(chat.branches)
       const el = document.getElementById("allchats-main");
       if(el) {
         el.style.paddingTop = "1vh"
@@ -205,7 +219,7 @@ function Chat(props) {
       {rootChatData && (
         <div>
           <div className='chat-title-etc'>
-            <h1>{rootChatData.name}</h1>
+            <h1>{getDisplayChatName(rootChatData)}</h1>
             <div>
               <h3 className='mb-3'>{rootChatData.branches.length} branches</h3>
               {mode=="block" ? (
@@ -343,9 +357,13 @@ function Chat(props) {
                             {/* Horizontal Line */}
                             <div className="w-8 h-1 bg-gray-500 mx-2" />
                             {/* Branch Block */}
-                            <div className="rounded-xl px-4 py-2 border border-blue-500 text-blue-300 bg-black w-[200px] text-sm shadow-md">
+                            <div
+                              className="rounded-xl px-4 py-2 border border-blue-500 text-blue-300 bg-black w-[200px] text-sm shadow-md cursor-pointer hover:bg-blue-950 transition-all"
+                              onClick={() => settingBranchData(Object.keys(branch)[0])}
+                              title={`Go to branch: ${Object.keys(branch)[0]}`}
+                            >
                               <div className="font-bold text-xs mb-1 opacity-70">Branch</div>
-                              <div>{Object.keys((branches.find(obj => Object.values(obj)[0] === idx)))[0]}</div>
+                              <div>{Object.keys(branch)[0]}</div>
                             </div>
                           </>
                         )}
@@ -404,7 +422,7 @@ function Chat(props) {
       {branchChatData && (
         <div>
           <div className='chat-title-etc'>
-            <h1><span className='text-green-400'>Branch: </span>{branchChatData.name}</h1>
+            <h1><span className='text-green-400'>Branch: </span>{getDisplayChatName(branchChatData)}</h1>
             <div>
               <h3 className='border-b border-neutral-500 pb-3 mb-3'>Chat Quick links</h3>
               <Button onClick={() => {
@@ -432,9 +450,9 @@ function Chat(props) {
               </Button>
             </div>
           </div>
-          <div className='mainchat'>
-            <div className='px-4' id="allmessages-branch">
-              <h3 className='text-center my-5 opacity-[70%] text-sm' id="rootStartPointer">Root chat starts here</h3>
+          <div className='mainchat w-full h-full overflow-scroll'>
+            <div className='px-4 w-full' id="allmessages-branch">
+              <h3 className='text-center my-5 opacity-[70%]  text-sm' id="rootStartPointer">Root chat starts here</h3>
               {branchChatData.messages?.map((msg, index) => (
                 <React.Fragment key={index}>
                   <div
@@ -455,6 +473,7 @@ function Chat(props) {
                   )}
                 </React.Fragment>
               ))}
+              <br/>
             </div>
             <div className='user-input rounded-xl'>
               <input

@@ -1,9 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import "./Liked.css";
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { Heart, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+// Helper to get chat doc ID safely (avoids double email)
+function getChatDocId(owner, name) {
+  if (name && name.includes('__')) return name;
+  return `${owner}__${name}`;
+}
+
+// Helper to get display name from chat ID
+function getDisplayChatName(chat) {
+  if (!chat) return '';
+  if (chat.name && chat.name.includes('__')) {
+    return chat.name.split('__').slice(1).join('__');
+  }
+  return chat.name || '';
+}
 
 function Liked(props) {
   const [userData, setUserData] = useState(null);
@@ -11,7 +26,7 @@ function Liked(props) {
 
   async function fetchChatsData(chatIDs) {
     const chatPromises = chatIDs.map(async (element) => {
-      const docRef = doc(db, "chats", element);
+      const docRef = doc(db, "chats", getChatDocId(props.userData.email, element));
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -40,7 +55,7 @@ function Liked(props) {
   }, [props.userData]);
 
   return (
-    <div className='liked-main flex items-start mt-3 h-full'>
+    <div className='liked-main flex items-start mt-3 h-full mobile-friendly'>
       {allChats && (
         <div>
           <h1 className='scroll-m-20 text-4xl font-extrabold tracking-tight text-balance mb-3'>Favorites </h1>
@@ -50,7 +65,7 @@ function Liked(props) {
             {allChats.map((chatName) => (
               // <h1 key={chatName.name}>Hello</h1>
               <div key={chatName.name} className='root-chat-display w-full p-6 rounded-xl mb-4'>
-                <h1 className=' text-xl'>{chatName.name}</h1>
+                <h1 className=' text-xl'>{getDisplayChatName(chatName)}</h1>
                 <div className='flex justify-between items-center mt-4'>
                   <div className='flex items-center gap-5'>
                     {chatName.favorite=="yes" ? (
@@ -59,7 +74,7 @@ function Liked(props) {
                     ):(
                       <Button onClick={async () => {
                         toast("You favorited it! Changes will be made the next time you visit this page")
-                        await updateDoc(doc(db, "chats", chatName.name), {
+                        await updateDoc(doc(db, "chats", getChatDocId(props.userData.email, chatName.name)), {
                           favorite: "yes"
                         })
                       }} className='dark border-neutral-800' variant={'outline'}>Favorite this {'<3'}</Button>
